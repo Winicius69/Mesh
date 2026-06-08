@@ -79,9 +79,6 @@ function animate() {
   const positionsArray = particles.geometry.attributes.position.array;
   for (let i = 2; i < positionsArray.length; i += 3) {
     positionsArray[i] += travelSpeed;
-    if (positionsArray[i] > zLimitFront) {
-      positionsArray[i] = zLimitBack;
-    }
   }
 
   // Ajuste orgânico por partícula (Z + drift X/Y)
@@ -94,6 +91,8 @@ function animate() {
     positionsArray[base + 1] += dy;
     positionsArray[base + 2] += velocities[p] - travelSpeed;
     if (positionsArray[base + 2] > zLimitFront) {
+      positionsArray[base + 0] = (Math.random() - 0.5) * 20;
+      positionsArray[base + 1] = (Math.random() - 0.5) * 20;
       positionsArray[base + 2] = zLimitBack;
     }
   }
