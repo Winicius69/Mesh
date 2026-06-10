@@ -57,6 +57,17 @@ const travelSpeed = 0.02;
 const zLimitFront = camera.position.z + 1;
 const zLimitBack = -20;
 
+// ======== ANOMALIA INVISÍVEL ========
+const anomalyX = 1.4;
+const anomalyY = 0.4;
+const anomalyZ = -6;
+const anomalyRadius = 2.2;
+const anomalyRadiusSq = anomalyRadius * anomalyRadius;
+const anomalyPull = 0.0006;
+const anomalySlowdown = 0.35;
+const anomalyPulseSpeed = 0.00005;
+const anomalyPulseDepth = 0.25;
+
 // ======== VARIAÇÃO ORGÂNICA ========
 const velocities = new Float32Array(particleCount);
 const drift = new Float32Array(particleCount * 2);
@@ -70,6 +81,10 @@ for (let i = 0; i < particleCount; i++) {
 // ======== ANIMAÇÃO ========
 function animate() {
   requestAnimationFrame(animate);
+
+  const anomalyPulse = 1 - anomalyPulseDepth * (0.5 + 0.5 * Math.sin(performance.now() * anomalyPulseSpeed));
+  const currentAnomalyPull = anomalyPull * anomalyPulse;
+  const currentAnomalySlowdown = anomalySlowdown * anomalyPulse;
 
   // Movimento tipo espaço viajando
   particles.rotation.x += 0.0008;
@@ -87,9 +102,22 @@ function animate() {
     const dx = drift[p * 2 + 0];
     const dy = drift[p * 2 + 1];
 
+    const ax = anomalyX - positionsArray[base + 0];
+    const ay = anomalyY - positionsArray[base + 1];
+    const az = anomalyZ - positionsArray[base + 2];
+    const distanceSq = ax * ax + ay * ay + az * az;
+    let zInfluence = 0;
+
+    if (distanceSq < anomalyRadiusSq) {
+      const influence = 1 - distanceSq / anomalyRadiusSq;
+      positionsArray[base + 0] += ax * currentAnomalyPull * influence;
+      positionsArray[base + 1] += ay * currentAnomalyPull * influence;
+      zInfluence = velocities[p] * currentAnomalySlowdown * influence;
+    }
+
     positionsArray[base + 0] += dx;
     positionsArray[base + 1] += dy;
-    positionsArray[base + 2] += velocities[p] - travelSpeed;
+    positionsArray[base + 2] += velocities[p] - travelSpeed - zInfluence;
     if (positionsArray[base + 2] > zLimitFront) {
       positionsArray[base + 0] = (Math.random() - 0.5) * 20;
       positionsArray[base + 1] = (Math.random() - 0.5) * 20;
